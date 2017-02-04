@@ -1,0 +1,5 @@
+---
+# Handler to handle notifications
+
+- name: restart redis
+  service: name=redis state=restarted

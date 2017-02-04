@@ -1,0 +1,26 @@
+---
+- name: install redis package
+  yum: name=redis state=installed enablerepo=remi
+  register: result
+  when: ansible_os_family == 'RedHat'
+
+- name: install redis package
+  apt: name=redis-server state=installed
+  register: result
+  when: ansible_os_family == 'Debian'
+
+- name: Create systemd override directory
+  file: path=/etc/systemd/system/redis.service.d state=directory mode=0755
+
+- name: Update configuration
+  template: src={{ item.src }} dest={{ item.dest }} owner=redis group=root mode=0644
+  with_items:
+      - { src: redis.conf.j2, dest: /etc/redis.conf }
+      - { src: systemd-override.conf.j2, dest: /etc/systemd/system/redis.service.d/override.conf }
+  notify:
+  - restart redis
+
+- name: Start Redis Service
+  service: name=redis state=started enabled=yes
+  when: result|success
+  
